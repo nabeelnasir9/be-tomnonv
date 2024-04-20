@@ -136,20 +136,29 @@ router.post("/multi", async (req, res) => {
     const prompt = `https://i.ibb.co/3TR9Vxj/images-1.jpg Subject is a young ${body.ethnicity} ${body.gender} on island carrying abag on a stick and skipping carelessly.subjectis facing the camera. fullshot.photorealistic details.tarot card. --ar 1:2 --style raw `;
     const prompt2 = `https://i.ibb.co/3TR9Vxj/images-1.jpg young ${body.ethnicity} ${body.gender}. magician. photorealistic details. tarot card. --ar 1:2 --style raw`;
     const prompt3 = `https://i.ibb.co/3TR9Vxj/images-1.jpg young ${body.ethnicity} ${body.gender} sitting on a throne.the ${body.gender} has a feminine quality.the ${body.gender} is wearing white. 45 degree sideview. photorealistic details.tarot card. --ar 1:2 --style raw`;
+    const prompt4 = `https://i.ibb.co/3TR9Vxj/images-1.jpg a young ${body.ethnicity} ${body.gender} riding in a chariot, adorned by armor and a crown,two sphinxes, a canopy full of stars. photorealistic details.tarot card. --ar 1:2 --style raw`;
+    const prompt5 = `https://i.ibb.co/3TR9Vxj/images-1.jpg young ${body.ethnicity} islander ${body.gender}. lonely. holding a lantern. holding awalking stick.sideviewlookingatcamera.photorealistic details.tarot card. --ar 1:2 --style raw`;
 
     const task1Promise = makeRequest(prompt);
-    // const task2Promise = makeRequest(prompt2);
-    // const task3Promise = makeRequest(prompt3);
+    const task2Promise = makeRequest(prompt2);
+    const task3Promise = makeRequest(prompt3);
+    const task4Promise = makeRequest(prompt4);
+    const task5Promise = makeRequest(prompt5);
 
-    const [taskResult1] = await Promise.all([
-      task1Promise,
-      // task2Promise,
-      // task3Promise,
-    ]);
+    const [taskResult1, taskResult2, taskResult3, taskResult4, taskResult5] =
+      await Promise.all([
+        task1Promise,
+        task2Promise,
+        task3Promise,
+        task4Promise,
+        task5Promise,
+      ]);
     if (
-      taskResult1.status === "finished"
-      // taskResult2.status === "finished" &&
-      // taskResult3.status === "finished"
+      taskResult1.status === "finished" &&
+      taskResult2.status === "finished" &&
+      taskResult3.status === "finished" &&
+      taskResult4.status === "finished" &&
+      taskResult5.status === "finished"
     ) {
       res.status(200).json([
         {
@@ -158,26 +167,40 @@ router.post("/multi", async (req, res) => {
           uri: taskResult1.task_result.image_url,
           process_time: taskResult1.process_time,
         },
-        // {
-        //   status: taskResult2.status,
-        //   task_id: taskResult2.task_id,
-        //   uri: taskResult2.task_result.image_url,
-        //   process_time: taskResult2.process_time,
-        // },
-        // {
-        //   status: taskResult3.status,
-        //   task_id: taskResult3.task_id,
-        //   uri: taskResult3.task_result.image_url,
-        //   process_time: taskResult3.process_time,
-        // },
+        {
+          status: taskResult2.status,
+          task_id: taskResult2.task_id,
+          uri: taskResult2.task_result.image_url,
+          process_time: taskResult2.process_time,
+        },
+        {
+          status: taskResult3.status,
+          task_id: taskResult3.task_id,
+          uri: taskResult3.task_result.image_url,
+          process_time: taskResult3.process_time,
+        },
+        {
+          status: taskResult4.status,
+          task_id: taskResult4.task_id,
+          uri: taskResult4.task_result.image_url,
+          process_time: taskResult4.process_time,
+        },
+        {
+          status: taskResult5.status,
+          task_id: taskResult5.task_id,
+          uri: taskResult5.task_result.image_url,
+          process_time: taskResult5.process_time,
+        },
       ]);
     } else {
       res.status(202).json([
         {
           message: "At least one task is still processing",
           status1: taskResult1.status,
-          // status2: taskResult2.status,
-          // status3: taskResult3.status,
+          status2: taskResult2.status,
+          status3: taskResult3.status,
+          status4: taskResult4.status,
+          status5: taskResult5.status,
         },
       ]);
     }
