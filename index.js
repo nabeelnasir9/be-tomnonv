@@ -15,15 +15,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cors());
 
-const serverAddress = process.env.ORIGIN;
-app.use(
-  cors({
-    // Use the serverAddress variable for the origin
-    origin: `${serverAddress}`,
-    credentials: true,
-  }),
-);
+// const serverAddress = process.env.ORIGIN;
+// app.use(
+//   cors({
+//     // Use the serverAddress variable for the origin
+//     origin: `${serverAddress}`,
+//     credentials: true,
+//   }),
+// );
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,

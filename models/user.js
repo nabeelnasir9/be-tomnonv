@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   otp: { type: String },
   verified: { type: Boolean },
   selectedImages: { type: Array },
+  orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
   orderedImages: { type: Array },
   otp_expiry: { type: Date },
 });

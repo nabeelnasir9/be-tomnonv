@@ -1,11 +1,14 @@
 const express = require("express");
 const User = require("../models/user");
+const Order = require("../models/order");
+const Stripe = require("stripe");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const otpGenerator = require("otp-generator");
 require("dotenv").config();
 
+const stripe = Stripe(process.env.STRIPE_KEY);
 const router = express.Router();
 
 const transporter = nodemailer.createTransport({
@@ -217,6 +220,101 @@ router.post("/check", async (req, res) => {
     return res.status(200).json({ exists: urlExists });
   } catch (error) {
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/payment", async (req, res) => {
+  const { images, userEmail } = req.body;
+
+  const lineItems = images.map((index) => ({
+    price_data: {
+      currency: "usd",
+      product_data: {
+        name: "Tarot Card",
+        images: [index],
+      },
+      unit_amount: 6000,
+    },
+    quantity: "1",
+  }));
+  try {
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      shipping_address_collection: {
+        allowed_countries: ["IN", "US", "CA"],
+      },
+      success_url: "http://localhost:8000/success",
+      cancel_url: "http://localhost:8000/cancel",
+    });
+
+    const order = new Order({
+      sessionId: session.id,
+      userId: user._id,
+      lineItems: lineItems,
+    });
+    await order.save();
+    user.orders.push(order._id);
+    await user.save();
+    res.json({ id: session.id, url: session.url });
+  } catch (error) {
+    console.error("Error processing payment:", error);
+    res.status(500).json({ error: "Failed to process payment" });
+  }
+});
+
+// router.get("/sessionid", async (req, res) => {
+//   try {
+//     const session = await stripe.checkout.sessions.retrieve(
+//       "cs_test_a1BX7s0kj2b0XFEPikuwNBfdApTDYdFKgh2gcIDZvgUgVpmi5YZBP82tBG",
+//     );
+//     res.json(session);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// });
+
+// router.post("/payment2", async (req, res) => {
+//   const { images } = req.body;
+//   const lineItems = images.map((index) => ({
+//     price_data: {
+//       currency: "usd",
+//       product_data: {
+//         name: "Tarot Cards",
+//         images: [index],
+//       },
+//       unit_amount: 6000,
+//     },
+//     quantity: "1",
+//   }));
+//   const session = await stripe.checkout.sessions.create({
+//     payment_method_types: ["card"],
+//     line_items: lineItems,
+//     mode: "payment",
+//     success_url: "http://localhost:8000/success",
+//     cancel_url: "http://localhost:8000/cancel",
+//   });
+//   console.log(session.customer);
+//   res.json({ id: session.id, url: session.url });
+// });
+
+router.get("/orders", async (req, res) => {
+  const { userEmail } = req.query;
+  try {
+    const user = await User.findOne({ email: userEmail }).populate("orders");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(user.orders);
+  } catch (error) {
+    console.error("Error fetching user's orders:", error);
+    res.status(500).json({ error: "Failed to fetch user's orders" });
   }
 });
 module.exports = router;
