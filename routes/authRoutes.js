@@ -250,8 +250,8 @@ router.post("/payment", async (req, res) => {
       shipping_address_collection: {
         allowed_countries: ["IN", "US", "CA"],
       },
-      success_url: "http://localhost:8000/success",
-      cancel_url: "http://localhost:8000/cancel",
+      success_url: "https://be-tomnonv.onrender.com/success",
+      cancel_url: "https://be-tomnonv.onrender.com/cancel",
     });
 
     const order = new Order({
