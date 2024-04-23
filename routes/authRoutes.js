@@ -275,7 +275,7 @@ router.post("/verify-otp", async (req, res) => {
       (err, token) => {
         if (err) throw err;
         res.json({ token });
-      }
+      },
     );
   } catch (err) {
     console.error(err.message);
@@ -317,7 +317,7 @@ router.post("/login", async (req, res) => {
             email: user.email,
           },
         });
-      }
+      },
     );
   } catch (err) {
     console.error(err.message);
@@ -414,6 +414,7 @@ router.post("/payment", async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+    console.log(process.env.ORIGIN);
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
@@ -421,8 +422,8 @@ router.post("/payment", async (req, res) => {
       shipping_address_collection: {
         allowed_countries: ["IN", "US", "CA"],
       },
-      success_url: "https://www.synthseer.com//success",
-      cancel_url: "https://www.synthseer.com//cancel",
+      success_url: `${process.env.ORIGIN}/success`,
+      cancel_url: `${process.env.ORIGIN}/cancel`,
     });
 
     const order = new Order({
