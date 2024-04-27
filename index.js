@@ -3,8 +3,6 @@ const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const authRoutes = require("./routes/authRoutes");
 const goapiRoutes = require("./routes/goapiRoutes");
-const journeyRoutes = require("./routes/journeyRoutes");
-const authRoutes2 = require("./routes/authRoutes2");
 const middlewares = require("./middlewares");
 const cors = require("cors");
 require("dotenv").config();
@@ -33,7 +31,6 @@ mongoose
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// app.use("/api/user", authRoutes2);
 app.use("/api/auth", authRoutes);
 app.use("/api/generate", goapiRoutes);
 app.use(middlewares.notFound);
