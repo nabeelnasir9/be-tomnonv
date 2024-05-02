@@ -95,7 +95,7 @@ router.post("/create2", async (req, res) => {
         {
           message: "At least one task is still processing",
           status1: taskResult1.status,
-          status2: taskResult2.status,
+          // status2: taskResult2.status,
         },
       ]);
     }

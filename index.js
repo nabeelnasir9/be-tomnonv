@@ -2,6 +2,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const goapiRoutes = require("./routes/goapiRoutes");
 const middlewares = require("./middlewares");
 const cors = require("cors");
@@ -33,6 +34,7 @@ mongoose
 
 app.use("/api/auth", authRoutes);
 app.use("/api/generate", goapiRoutes);
+app.use("/api/admin", adminRoutes);
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
 

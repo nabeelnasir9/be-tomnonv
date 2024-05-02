@@ -430,6 +430,7 @@ router.post("/payment", async (req, res) => {
       sessionId: session.id,
       userId: user._id,
       lineItems: lineItems,
+      delivery_status: "Expected",
     });
     await order.save();
     user.orders.push(order._id);
