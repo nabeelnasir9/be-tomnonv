@@ -6,17 +6,7 @@ require("dotenv").config();
 
 const stripe = Stripe(process.env.STRIPE_KEY);
 const router = express.Router();
-// router.get("/sessionid", async (req, res) => {
-//   try {
-//     const session = await stripe.checkout.sessions.retrieve(
-//       "cs_test_a1DJJbZ86EqMcRWAhWDImE1eFJHExzbgnZpDCbY6IOgF2yPzVzp7vMaraj",
-//     );
-//     res.json(session);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
-router.get("/all-users", async (req, res) => {
+router.get("/all-users", async (_req, res) => {
   try {
     const users = await User.find().populate("orders");
     for (const user of users) {
@@ -39,7 +29,7 @@ router.get("/all-users", async (req, res) => {
   }
 });
 
-router.get("/all-orders", async (req, res) => {
+router.get("/all-orders", async (_req, res) => {
   try {
     const orders = await Order.find();
     let totalAmount = 0;
@@ -73,6 +63,25 @@ router.get("/all-orders", async (req, res) => {
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Server error");
+  }
+});
+
+router.post("/update-status", async (req, res) => {
+  try {
+    const { orderId, deliveryStatus } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      { delivery_status: deliveryStatus },
+      { new: true },
+    );
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error("Error updating delivery status:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
