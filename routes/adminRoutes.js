@@ -86,4 +86,38 @@ router.post("/update-status", async (req, res) => {
   }
 });
 
+router.get("/prompts", async (req, res) => {
+  try {
+    const existingPrompts = await Prompt.find();
+
+    res.status(200).json(existingPrompts);
+  } catch (error) {
+    console.error("Error retrieving prompts:", error);
+    res
+      .status(500)
+      .json({ message: "Error retrieving prompts from the database" });
+  }
+});
+router.post("/prompt-editor", async (req, res) => {
+  try {
+    const updatedPrompts = req.body;
+    await Promise.all(
+      updatedPrompts.map(async (updatedPrompt) => {
+        const existingPrompt = await Prompt.findOneAndUpdate(
+          { _id: updatedPrompt._id }, // Assuming each prompt has an _id field to uniquely identify it
+          { prompt: updatedPrompt.prompt },
+          { new: true }, // Return the updated document
+        );
+        if (!existingPrompt) {
+          throw new Error(`Prompt with ID ${updatedPrompt._id} not found`);
+        }
+      }),
+    );
+    const updatedPromptsFromDB = await Prompt.find();
+    res.status(200).json(updatedPromptsFromDB);
+  } catch (error) {
+    console.error("Prompt changing error:", error);
+    res.status(500).json({ message: "Prompt changing had error" });
+  }
+});
 module.exports = router;
