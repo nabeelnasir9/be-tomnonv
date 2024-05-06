@@ -2,6 +2,7 @@ const express = require("express");
 const User = require("../models/user");
 const Stripe = require("stripe");
 const Order = require("../models/order");
+const Prompt = require("../models/prompts");
 require("dotenv").config();
 
 const stripe = Stripe(process.env.STRIPE_KEY);
