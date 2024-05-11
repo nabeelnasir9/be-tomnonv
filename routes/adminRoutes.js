@@ -67,6 +67,9 @@ router.get("/all-orders", async (_req, res) => {
   }
 });
 
+/**
+ * @classdesc [INFO: Update Status of Order]
+ */
 router.post("/update-status", async (req, res) => {
   try {
     const { orderId, deliveryStatus } = req.body;
@@ -98,15 +101,28 @@ router.get("/prompts", async (req, res) => {
       .json({ message: "Error retrieving prompts from the database" });
   }
 });
+
+router.get("/order-noti", async (req, res) => {
+  try {
+    const allOrders = await Order.find();
+    res.status(200).json(allOrders.length);
+  } catch (error) {
+    console.error("Error retrieving prompts:", error);
+    res
+      .status(500)
+      .json({ message: "Error retrieving prompts from the database" });
+  }
+});
+
 router.post("/prompt-editor", async (req, res) => {
   try {
     const updatedPrompts = req.body;
     await Promise.all(
       updatedPrompts.map(async (updatedPrompt) => {
         const existingPrompt = await Prompt.findOneAndUpdate(
-          { _id: updatedPrompt._id }, // Assuming each prompt has an _id field to uniquely identify it
+          { _id: updatedPrompt._id },
           { prompt: updatedPrompt.prompt },
-          { new: true }, // Return the updated document
+          { new: true },
         );
         if (!existingPrompt) {
           throw new Error(`Prompt with ID ${updatedPrompt._id} not found`);
