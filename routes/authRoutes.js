@@ -332,21 +332,8 @@ router.post("/selected", async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    user.selectedImages.push(image);
-    await user.save();
-    res.status(200).json({ success: "Image added successfully" });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-router.post("/confirmed", async (req, res) => {
-  try {
-    const { email, image } = req.body;
-    let user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+    if (user.selectedImages.includes(image)) {
+      return res.status(400).json({ error: "Image already selected" });
     }
     user.selectedImages.push(image);
     await user.save();
@@ -368,27 +355,6 @@ router.post("/cart", async (req, res) => {
     return res
       .status(200)
       .json({ message: "User found", images: selectedImages });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-router.post("/check", async (req, res) => {
-  try {
-    const { email, image } = req.body;
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    const urlExists = user.selectedImages.includes(image);
-
-    if (!urlExists) {
-      user.selectedImages.push(image);
-      await user.save();
-    }
-
-    return res.status(200).json({ exists: urlExists });
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
