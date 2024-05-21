@@ -188,8 +188,75 @@ router.get("/get-prompts", async (req, res) => {
 //     res.status(500).json({ message: "Error updating prompts", error });
 //   }
 // });
-
 router.post("/multi", async (req, res) => {
+  try {
+    const { ethnicity, gender, prompts } = req.body;
+    console.log(req.body);
+    const processedSinglePrompt = prompts[0].prompt
+      .replace(/{ethnicity}/g, ethnicity)
+      .replace(/{gender}/g, gender);
+    console.log(processedSinglePrompt);
+    const config = {
+      headers: {
+        "X-API-KEY": token,
+      },
+      data: {
+        prompt: `https://i.ibb.co/3TR9Vxj/images-1.jpg ${processedSinglePrompt}`,
+        aspect_ratio: "1:2",
+        process_mode: "relax",
+        webhook_endpoint: "",
+        webhook_secret: "",
+      },
+      url: "https://api.midjourneyapi.xyz/mj/v2/imagine",
+      method: "post",
+    };
+
+    const answer = await axios(config);
+    const response = answer.data;
+    const taskResult = await CheckProgress(response.task_id);
+    const id = taskResult.task_id;
+    if (taskResult.status === "finished") {
+      const config = {
+        headers: {
+          "X-API-KEY": token,
+        },
+        data: {
+          origin_task_id: `${id}`,
+          index: `1`,
+          webhook_endpoint: "",
+          webhook_secret: "",
+        },
+        url: "https://api.midjourneyapi.xyz/mj/v2/upscale",
+        method: "post",
+      };
+      const answer = await axios(config);
+      const response = answer.data;
+
+      const taskResult2 = await CheckProgress(response.task_id);
+      if (taskResult2.status === "finished") {
+        res.status(200).json([
+          {
+            status: taskResult2.status,
+            task_id: taskResult2.task_id,
+            uri: taskResult2.task_result.image_url,
+            process_time: taskResult2.process_time,
+          },
+        ]);
+      }
+    } else {
+      res.status(400).json({
+        message: "Error in Upscaling",
+        error: error.message,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      message: "An error occurred",
+      error: error.message || JSON.stringify(error, null, 2),
+    });
+  }
+});
+router.post("/multi2", async (req, res) => {
   try {
     const { ethnicity, gender, prompts } = req.body;
     console.log(req.body);
@@ -217,13 +284,16 @@ router.post("/multi", async (req, res) => {
       return taskResult;
     };
 
+    // Process prompts by replacing placeholders
+    const processedPrompts = prompts.map((prompt) =>
+      prompt.prompt
+        .replace(/{ethnicity}/g, ethnicity)
+        .replace(/{gender}/g, gender),
+    );
+
     // Make requests for each prompt
-    const taskPromises = prompts.map((prompt) =>
-      makeRequestWithDynamicPrompt(
-        prompt.prompt
-          .replace(/{ethnicity}/g, ethnicity)
-          .replace(/{gender}/g, gender),
-      ),
+    const taskPromises = processedPrompts.map((prompt) =>
+      makeRequestWithDynamicPrompt(prompt),
     );
 
     // Wait for all requests to finish
