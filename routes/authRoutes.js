@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const otpGenerator = require("otp-generator");
+const crypto = require("crypto");
 require("dotenv").config();
 
 const stripe = Stripe(process.env.STRIPE_KEY);
@@ -275,7 +276,7 @@ router.post("/verify-otp", async (req, res) => {
       (err, token) => {
         if (err) throw err;
         res.json({ token });
-      },
+      }
     );
   } catch (err) {
     console.error(err.message);
@@ -317,7 +318,7 @@ router.post("/login", async (req, res) => {
             email: user.email,
           },
         });
-      },
+      }
     );
   } catch (err) {
     console.error(err.message);
@@ -456,4 +457,175 @@ router.get("/orders", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user's orders" });
   }
 });
+
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const token = crypto.randomBytes(20).toString("hex");
+
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+    await user.save();
+
+    const resetUrl = `${process.env.ORIGIN}/reset-password/${token}`;
+
+    const mailOptions = {
+      to: user.email,
+      from: process.env.EMAIL_USER,
+      subject: "Password Reset",
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Password Reset</title>
+            <style>
+              body {
+                font-family: 'Arial', sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+              }
+              .container {
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                padding: 20px 0;
+              }
+              .header img {
+                width: 150px;
+              }
+              .content {
+                text-align: center;
+                padding: 20px 0;
+              }
+              .content h1 {
+                color: #333333;
+                font-size: 24px;
+              }
+              .content p {
+                color: #666666;
+                font-size: 16px;
+              }
+              .content a {
+                display: inline-block;
+                margin-top: 20px;
+                padding: 10px 20px;
+                color: #ffffff;
+                background-color: #007BFF;
+                text-decoration: none;
+                border-radius: 5px;
+              }
+              .footer {
+                text-align: center;
+                padding: 20px 0;
+                color: #999999;
+                font-size: 14px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <img src="https://i.ibb.co/cwfy96W/synthseer.png" alt="Synthseer Logo">
+              </div>
+              <div class="content">
+                <h1>Password Reset Request</h1>
+                <p>You are receiving this email because you (or someone else) requested a password reset for your account. If you did not request this, please ignore this email and your password will remain unchanged.</p>
+                <p>Click the button below to reset your password:</p>
+                <a href="${resetUrl}">Reset Password</a>
+              </div>
+              <div class="footer">
+                <p>Need help? Contact us at <a href="mailto:synthseer@gmail.com">synthseer@gmail.com</a></p>
+                <p>&copy; 2025 Synthseer. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+
+    transporter.sendMail(mailOptions, (err, response) => {
+      if (err) {
+        console.error("Error sending email:", err);
+        return res.status(500).json({ message: "Error sending email" });
+      }
+      res.status(200).json({ message: "Password reset link sent" });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+router.post("/reset-password/:token", async (req, res) => {
+  const { token } = req.params;
+  const { email, password, confirmPassword } = req.body;
+
+  console.log("Received password:", password);
+  console.log("Received confirmPassword:", confirmPassword);
+
+  if (password !== confirmPassword) {
+    console.log("Passwords do not match");
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  try {
+    // Find the user by email and ensure the token and expiration date match
+    const user = await User.findOne({
+      email,
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      console.log("Invalid or expired token or email");
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired token or email" });
+    }
+
+    // Log the current password
+    console.log("Current hashed password (before resetting):", user.password);
+
+    // Hash the new password manually
+    const hashedPassword = await bcrypt.hash(password, 8);
+
+    // Log the new hashed password
+    console.log("New hashed password (after hashing):", hashedPassword);
+
+    // Update the user's password and clear the reset token and expiry
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    // Save the updated user document without triggering the pre-save hook
+    await user.updateOne({
+      password: hashedPassword,
+      resetPasswordToken: undefined,
+      resetPasswordExpires: undefined,
+    });
+
+    // Log the saved password
+    console.log("Saved hashed password:", hashedPassword);
+
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
