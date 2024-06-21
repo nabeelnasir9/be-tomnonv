@@ -9,6 +9,10 @@ const PromptSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  text: {
+    type: String,
+    required: true,
+  },
 });
 
 const Prompt = mongoose.model("Prompt", PromptSchema);
