@@ -276,7 +276,7 @@ router.post("/verify-otp", async (req, res) => {
       (err, token) => {
         if (err) throw err;
         res.json({ token });
-      }
+      },
     );
   } catch (err) {
     console.error(err.message);
@@ -318,7 +318,7 @@ router.post("/login", async (req, res) => {
             email: user.email,
           },
         });
-      }
+      },
     );
   } catch (err) {
     console.error(err.message);
@@ -363,18 +363,30 @@ router.post("/cart", async (req, res) => {
 
 router.post("/payment", async (req, res) => {
   const { images, userEmail } = req.body;
-
-  const lineItems = images.map((index) => ({
-    price_data: {
-      currency: "usd",
-      product_data: {
-        name: "Tarot Card",
-        images: [index],
+  const lineItems = [
+    {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: "Manifest Deck",
+          images: images.map((image) => image.uri),
+        },
+        unit_amount: 4000,
       },
-      unit_amount: 6000,
+      quantity: 1,
     },
-    quantity: "1",
-  }));
+  ];
+  // const lineItems = images.map((index) => ({
+  //   price_data: {
+  //     currency: "usd",
+  //     product_data: {
+  //       name: "Tarot Card",
+  //       images: [index],
+  //     },
+  //     unit_amount: 4000,
+  //   },
+  //   quantity: "1",
+  // }));
   try {
     const user = await User.findOne({ email: userEmail });
 
@@ -408,41 +420,6 @@ router.post("/payment", async (req, res) => {
     res.status(500).json({ error: "Failed to process payment" });
   }
 });
-
-// router.get("/sessionid", async (req, res) => {
-//   try {
-//     const session = await stripe.checkout.sessions.retrieve(
-//       "cs_test_a1BX7s0kj2b0XFEPikuwNBfdApTDYdFKgh2gcIDZvgUgVpmi5YZBP82tBG",
-//     );
-//     res.json(session);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
-
-// router.post("/payment2", async (req, res) => {
-//   const { images } = req.body;
-//   const lineItems = images.map((index) => ({
-//     price_data: {
-//       currency: "usd",
-//       product_data: {
-//         name: "Tarot Cards",
-//         images: [index],
-//       },
-//       unit_amount: 6000,
-//     },
-//     quantity: "1",
-//   }));
-//   const session = await stripe.checkout.sessions.create({
-//     payment_method_types: ["card"],
-//     line_items: lineItems,
-//     mode: "payment",
-//     success_url: "http://localhost:8000/success",
-//     cancel_url: "http://localhost:8000/cancel",
-//   });
-//   console.log(session.customer);
-//   res.json({ id: session.id, url: session.url });
-// });
 
 router.get("/orders", async (req, res) => {
   const { userEmail } = req.query;
