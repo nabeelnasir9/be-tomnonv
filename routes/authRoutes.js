@@ -360,6 +360,20 @@ router.post("/cart", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+router.post("/delete-cart", async (req, res) => {
+  try {
+    const { email, image } = req.body;
+    let user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    user.selectedImages.splice(user.selectedImages.indexOf(image), 1);
+    await user.save();
+    return res.status(200).json({ message: "deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 router.post("/payment", async (req, res) => {
   const { images, userEmail } = req.body;
