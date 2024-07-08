@@ -226,7 +226,7 @@ router.post("/multi", async (req, res) => {
       data: {
         prompt: `https://i.ibb.co/3TR9Vxj/images-1.jpg ${processedSinglePrompt}`,
         aspect_ratio: "1:2",
-        process_mode: "relax",
+        process_mode: "turbo",
         webhook_endpoint: "",
         webhook_secret: "",
       },
@@ -328,7 +328,7 @@ router.post("/edit", async (req, res) => {
       data: {
         prompt: `${body.imgUrl} ${body.prompt}`,
         aspect_ratio: "1:2",
-        process_mode: "relax",
+        process_mode: "turbo",
         webhook_endpoint: "",
         webhook_secret: "",
       },
