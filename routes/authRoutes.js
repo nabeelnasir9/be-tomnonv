@@ -413,7 +413,7 @@ router.post("/payment", async (req, res) => {
       line_items: lineItems,
       mode: "payment",
       shipping_address_collection: {
-        allowed_countries: ["IN", "US", "CA", "UK"],
+        allowed_countries: ["IN", "US", "CA"],
       },
       success_url: `${process.env.ORIGIN}/success`,
       cancel_url: `${process.env.ORIGIN}/cancel`,
