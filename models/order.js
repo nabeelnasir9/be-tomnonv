@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema({
   sessionId: { type: String, required: true },
-  images: { type: Array, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   lineItems: { type: Array, required: true },
   shipping: { type: Object },
