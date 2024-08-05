@@ -377,30 +377,21 @@ router.post("/delete-cart", async (req, res) => {
 
 router.post("/payment", async (req, res) => {
   const { images, userEmail } = req.body;
+
   const lineItems = [
     {
       price_data: {
         currency: "usd",
         product_data: {
-          name: "Manifest Deck",
-          images: images.map((image) => image.uri),
+          name: "Generative Images",
+          images: images.map((image) => image),
         },
         unit_amount: 4000,
       },
       quantity: 1,
     },
   ];
-  // const lineItems = images.map((index) => ({
-  //   price_data: {
-  //     currency: "usd",
-  //     product_data: {
-  //       name: "Tarot Card",
-  //       images: [index],
-  //     },
-  //     unit_amount: 4000,
-  //   },
-  //   quantity: "1",
-  // }));
+
   try {
     const user = await User.findOne({ email: userEmail });
 
@@ -418,12 +409,13 @@ router.post("/payment", async (req, res) => {
       success_url: `${process.env.ORIGIN}/success`,
       cancel_url: `${process.env.ORIGIN}/cancel`,
     });
+    console.log(images);
 
     const order = new Order({
       sessionId: session.id,
       userId: user._id,
       lineItems: lineItems,
-      delivery_status: "Expected",
+      delivery_status: "Under Review",
     });
     await order.save();
     user.orders.push(order._id);
