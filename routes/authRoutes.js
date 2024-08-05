@@ -4,6 +4,7 @@ const Order = require("../models/order");
 const Stripe = require("stripe");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
 const nodemailer = require("nodemailer");
 const otpGenerator = require("otp-generator");
 const crypto = require("crypto");
@@ -378,6 +379,9 @@ router.post("/delete-cart", async (req, res) => {
 router.post("/payment", async (req, res) => {
   const { images, userEmail } = req.body;
 
+  const trackingId = uuidv4();
+  const successUrl = `${process.env.ORIGIN}/success?trackingId=${trackingId}`;
+  const failUrl = `${process.env.ORIGIN}/cancel?trackingId=${trackingId}`;
   const lineItems = [
     {
       price_data: {
@@ -394,7 +398,6 @@ router.post("/payment", async (req, res) => {
 
   try {
     const user = await User.findOne({ email: userEmail });
-
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -406,16 +409,15 @@ router.post("/payment", async (req, res) => {
       shipping_address_collection: {
         allowed_countries: ["IN", "US", "CA"],
       },
-      success_url: `${process.env.ORIGIN}/success`,
-      cancel_url: `${process.env.ORIGIN}/cancel`,
+      success_url: successUrl,
+      cancel_url: failUrl,
     });
-    console.log(images);
-
     const order = new Order({
+      trackingId: trackingId,
       sessionId: session.id,
       userId: user._id,
       lineItems: lineItems,
-      delivery_status: "Under Review",
+      delivery_status: "Pending",
     });
     await order.save();
     user.orders.push(order._id);
@@ -438,6 +440,18 @@ router.get("/orders", async (req, res) => {
   } catch (error) {
     console.error("Error fetching user's orders:", error);
     res.status(500).json({ error: "Failed to fetch user's orders" });
+  }
+});
+
+router.get("/cancel/:trackingId", async (req, res) => {
+  const { trackingId } = req.params;
+  try {
+    const order = await Order.findOne({ trackingId });
+    order.delivery_status = "Cancelled";
+    await order.save();
+    res.json({ message: "Order cancelled" });
+  } catch (error) {
+    console.error("Error fetching user's orders:", error);
   }
 });
 
