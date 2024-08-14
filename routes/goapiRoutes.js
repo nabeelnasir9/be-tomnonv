@@ -224,7 +224,7 @@ router.post("/multi", async (req, res) => {
         "X-API-KEY": token,
       },
       data: {
-        prompt: `https://i.ibb.co/3TR9Vxj/images-1.jpg ${processedSinglePrompt}`,
+        prompt: `https://i.ibb.co/pXHV5LC/test-synth.jpg ${processedSinglePrompt}`,
         aspect_ratio: "1:2",
         process_mode: "turbo",
         webhook_endpoint: "",
