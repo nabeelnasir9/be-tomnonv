@@ -18,7 +18,7 @@ async function CheckProgress(reqid) {
         clearInterval(interval);
         reject(error);
       }
-    }, 3000);
+    }, 2000);
   });
 }
 
@@ -36,7 +36,7 @@ async function checkProgressSwap(reqid) {
         clearInterval(interval);
         reject(error);
       }
-    }, 3000);
+    }, 2000);
   });
 }
 
@@ -224,7 +224,7 @@ router.post("/multi", async (req, res) => {
         "X-API-KEY": token,
       },
       data: {
-        prompt: `https://utfs.io/f/03342c39-8be8-4656-838f-7bf2df199617-y8rwi7.jpg ${processedSinglePrompt}`,
+        prompt: `https://utfs.io/f/d9922e94-2d4d-40ce-b669-402d759db824-3wntx9.jpg ${processedSinglePrompt}`,
         aspect_ratio: "1:2",
         process_mode: "turbo",
         webhook_endpoint: "",
