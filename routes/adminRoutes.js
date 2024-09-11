@@ -9,7 +9,13 @@ const stripe = Stripe(process.env.STRIPE_KEY);
 const router = express.Router();
 router.get("/all-users", async (_req, res) => {
   try {
-    const users = await User.find().populate("orders");
+    const users = await User.find()
+      .populate({
+        path: "orders",
+        options: { sort: { _id: -1 } },
+      })
+      .sort({ _id: -1 });
+
     for (const user of users) {
       for (const order of user.orders) {
         try {
@@ -23,13 +29,13 @@ router.get("/all-users", async (_req, res) => {
         }
       }
     }
+
     res.json(users);
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Server error");
   }
 });
-
 router.get("/all-orders", async (_req, res) => {
   try {
     const orders = await Order.find();
@@ -39,19 +45,24 @@ router.get("/all-orders", async (_req, res) => {
     let unpaidCount = 0;
 
     orders.forEach((order) => {
-      totalAmount += order.shipping.amount_total;
+      // Safely access amount_total and ensure it's a number
+      if (order.shipping && order.shipping.amount_total) {
+        totalAmount += parseFloat(order.shipping.amount_total) || 0;
+      }
 
       order.lineItems.forEach((item) => {
-        totalItemCount += parseInt(item.quantity);
+        totalItemCount += parseInt(item.quantity) || 0; // Ensure quantity is a number
       });
 
-      const paymentStatus = order.shipping.payment_status;
+      // Safely handle payment status
+      const paymentStatus = order.shipping?.payment_status;
       if (paymentStatus === "paid") {
         paidCount++;
       } else if (paymentStatus === "unpaid") {
         unpaidCount++;
       }
     });
+
     const response = {
       totalAmount,
       totalItemCount,
