@@ -377,7 +377,12 @@ router.post("/delete-cart", async (req, res) => {
 });
 
 router.post("/payment", async (req, res) => {
-  const { images, userEmail } = req.body;
+  const { images, userEmail, coupon_code } = req.body;
+  let unit_amount = 4000;
+
+  if (coupon_code === "Redox") {
+    unit_amount = 0;
+  }
 
   const trackingId = uuidv4();
   const successUrl = `${process.env.ORIGIN}/success?trackingId=${trackingId}`;
@@ -390,7 +395,7 @@ router.post("/payment", async (req, res) => {
           name: "Generative Images",
           images: images.map((image) => image),
         },
-        unit_amount: 4000,
+        unit_amount: unit_amount,
       },
       quantity: 1,
     },
